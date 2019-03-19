@@ -1,16 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from Tkinter import *
-import Tkinter
-import tkMessageBox
-import thread
+from tkinter import *
+import tkinter
+import tkinter.messagebox
+import _thread
 import webbrowser
-from tkFileDialog import askdirectory
+from tkinter.filedialog import askdirectory
 from bs4 import BeautifulSoup
 import os
 import requests
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import datetime
 import base64
 import string
@@ -18,8 +18,11 @@ import getpass
 import multiprocessing
 import functools
 from io import open as iopen
-from urlparse import urlsplit
+from urllib.parse import urlsplit
 import platform
+
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 #for finding hiddenfields
 import lxml.html
@@ -113,7 +116,7 @@ class ILectureUnit():
         if not os.path.isdir(thepath):
             os.makedirs(thepath)
         if not os.path.exists(path + file_name):
-            print file_url
+            print(file_url)
             i = session.get(file_url)
             if i.status_code == requests.codes.ok:
                 with iopen(thepath + file_name + '.m4v', 'wb') as file:
@@ -154,7 +157,7 @@ class BlackboardUnit():
 
         name = urlsplit(urlpath)[2].split('/')
         name = name[len(name)-1]
-        name = urllib2.unquote(name).decode('utf8')
+        name = urllib.parse.unquote(name).decode('utf8')
         while ((len(thepath + name) > 240) or (len(name) > 50)):
             if "." in name:
                 filename = name.split('.')
@@ -171,7 +174,7 @@ class BlackboardUnit():
                 os.makedirs(thepath)
 
             if (not os.path.exists(thepath + name)):
-                print urlpath
+                print(urlpath)
                 urlResponse = self.session.get(urlpath)
                 if urlResponse.status_code == requests.codes.ok:
                     with iopen(thepath + name, 'wb') as file:
@@ -201,7 +204,7 @@ class BlackboardUnit():
                 try:
                     self.fetch_document('https://' + blackBoardBaseURL + '/' + link, folder_name, path)
                 except:
-                    print "Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1]))
+                    print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
 
         for htmlLink in soup.find_all('a'):
             link = htmlLink.get('href')
@@ -217,7 +220,7 @@ class BlackboardUnit():
                         visitlist.append(link)
                         visitlist = self.recursiveScrape(link, htmlLink.span.string, visitlist, path)
                 except:
-                    print "Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1]))
+                    print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
         return visitlist
 
     #starts scraping the unit, path is where it will save the files to
@@ -236,7 +239,7 @@ class BlackboardUnit():
                 try:
                     self.fetch_document('https://' + blackBoardBaseURL + '/' + link, '', path)
                 except:
-                    print "Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1]))
+                    print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
             elif link.startswith('https://' + blackBoardBaseURL + '/webapps/blackboard/content/listContent.jsp?') or link.startswith('/webapps/blackboard/content/listContent.jsp?'):
                 link = link.replace('https://' + blackBoardBaseURL + '/webapps/blackboard/content/listContent.jsp?course_id=_'
                                + self.uid + '_1&content_id=_', '')
@@ -248,8 +251,8 @@ class BlackboardUnit():
                         visitlist.append(link)
                         visitlist = self.recursiveScrape(link, htmlLink.span.string, visitlist, path)
                 except:
-                    print "Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1]))
-        print self.name + ' has finished'
+                    print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
+        print(self.name + ' has finished')
 
 #class for managing a blackboard session. Also holds lists of iLectures and units available to your session.
 class BlackboardSession():
@@ -299,7 +302,7 @@ class BlackboardSession():
 
         response = self.session.get('https://' + blackBoardBaseURL + '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_3_1')
         soup = BeautifulSoup(response.text, "html.parser")
-        print soup
+        print(soup)
         for htmlLink in soup.find_all('a'):
             link = htmlLink.get('href')
             #print htmlLink
@@ -324,7 +327,7 @@ class BlackboardSession():
                                         soup.find(id='courseMenu_link'
                                         ).get('title')[9:].replace('/','')))
         except:
-            print "Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1]))
+            print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
 
 
 #start the GUI
@@ -351,7 +354,7 @@ class scrapergui(Frame):
         kw['width'] = 110
         self.blackboard_session = None
         self.path = '.'
-        apply(Frame.__init__, (self, Master), kw)
+        Frame.__init__(*(self, Master), **kw)
         self.__RootObj = Frame
         self.__Frame2 = Frame(self)
         self.__Frame2.pack(side='top', padx=5, pady=0)
@@ -444,7 +447,7 @@ class scrapergui(Frame):
     #scrape ilectures
     def __on_Button4_ButRel_1(self, Event=None):
         self.path = self.__Entry3.get()
-        thread.start_new_thread(ILectureUnit.scrape_ilectures, (self.__Entry4.get(), self.path))
+        _thread.start_new_thread(ILectureUnit.scrape_ilectures, (self.__Entry4.get(), self.path))
 
     #login and get unit list
     def __on_Button2_ButRel_1(self, Event=None):
@@ -467,7 +470,7 @@ class scrapergui(Frame):
         self.path = self.__Entry3.get()
         for unit in map(int, self.__Listbox1.curselection()):
             bbunit = self.blackboard_session.unitList[unit]
-            thread.start_new_thread(bbunit.startScrape, (self.path,))
+            _thread.start_new_thread(bbunit.startScrape, (self.path,))
 
 
 
