@@ -25,7 +25,7 @@ from selenium import webdriver
 #import seleniumrequests as webdriver
 from selenium.webdriver.chrome.options import Options
 from time import sleep
-import re
+import re, pdfkit
 
 #for finding hiddenfields
 import lxml.html
@@ -147,6 +147,10 @@ class BlackboardUnit():
         self.session = session
         self.sessionr = sessionr
         self.visitList = []
+        self.cssHeader=""
+        with open("header.css", "r") as cssFile:
+            for x in cssFile.readlines():
+                self.cssHeader+=x
 
     #downloads a single document - does some checks on the filename to make sure it is legit
     #file url: the url of the file
@@ -241,6 +245,42 @@ class BlackboardUnit():
 
         if soup.find("div", {"id":"containerdiv"}).find_all('li') is None:
             print("7")
+
+        #soupTemp = BeautifulSoup(self.sessionr.page_source,features="lxml")
+
+        ## for pdfs
+
+        for htmlLink in soup.find("div", {"id":"containerdiv"}).find_all('li'):
+            if htmlLink.get('id') is None or htmlLink is None:
+                continue
+
+            if 'contentListItem' in htmlLink.get('id'):
+                if htmlLink.text != htmlLink.div.h3.text:
+                    tempT = self.cssHeader + htmlLink.prettify( formatter="html" )
+                    #tempT = htmlLink.prettify( formatter="html" )
+                    options = {
+                    'quiet': ''
+                    }
+                    #pdfkit.from_string(temp, "temp_" + str(number) + ".pdf", options=options)
+                    tempT = pdfkit.from_string(tempT, False, options=options)
+
+                    #temp =""
+                    #with open("temp_" + str(number) + ".pdf", "rb") as byteObject:
+                    #    temp = byteObject.read()
+                    tempPath = path + '/' + self.name + '/'
+
+                    if len(folder_name) > 0:
+                        tempPath += folder_name + '/'
+
+                    if not os.path.isdir(tempPath):
+                        os.makedirs(tempPath)
+
+                    if not (os.path.isfile(tempPath + sanitize(htmlLink.div.h3.text) + ".pdf")):
+                        with open(tempPath + sanitize(htmlLink.div.h3.text) + ".pdf", "wb") as file:
+                            file.write(tempT)
+                            file.flush()
+
+
 
         ## For attachments
         for htmlLink in soup.find("div", {"id":"containerdiv"}).find_all('li'):
