@@ -1,4 +1,6 @@
 beautifulsoup4
 requests
 selenium
-firefox
+chrome
+pdfkit
+lxml
