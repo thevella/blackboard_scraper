@@ -1,10 +1,11 @@
-from scrapergui3 import sanitize, blackBoardBaseURL
+from shared import sanitize, blackBoardBaseURL
+
 from bs4 import BeautifulSoup
 from io import open as iopen
 from urllib.parse import urlsplit
 import urllib.parse
 
-import requests.codes.ok as ok_codes
+import requests
 
 #urllib.request, urllib.error
 
@@ -90,7 +91,7 @@ class BlackboardUnit():
             if (not os.path.exists(thepath + listedName + '.' + ext)):
                 print(urlpath)
                 urlResponse = self.session.get(urlpath)
-                if urlResponse.status_code == ok_codes:
+                if urlResponse.status_code == requests.codes.ok:
                     #print("5")
                     #with iopen(thepath + name, 'wb') as file:
                     with iopen(thepath + listedName + '.' + ext, 'wb') as file:
