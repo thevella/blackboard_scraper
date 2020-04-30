@@ -7,8 +7,13 @@ import requests
 from selenium import webdriver
 #import seleniumrequests as webdriver
 from selenium.webdriver.firefox.options import Options
+from time import sleep
+
 
 from base64 import b64encode
+
+from BlackboardUnit import BlackboardUnit
+from ILectureUnit import ILectureUnit
 
 #class for managing a blackboard session. Also holds lists of iLectures and units available to your session.
 class BlackboardSession():

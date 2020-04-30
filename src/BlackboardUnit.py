@@ -9,7 +9,8 @@ import requests
 
 #urllib.request, urllib.error
 
-import re, pdfkit, os
+import re, pdfkit, os, sys
+
 from time import sleep
 
 
