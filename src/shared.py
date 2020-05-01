@@ -1,4 +1,4 @@
-
+debug = False
 #blackBoardBaseURL = "lms.curtin.edu.au"
 blackBoardBaseURL = 'uoit.blackboard.com'
 

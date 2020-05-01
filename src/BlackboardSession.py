@@ -1,4 +1,4 @@
-from shared import blackBoardBaseURL
+from shared import blackBoardBaseURL, debug
 
 from bs4 import BeautifulSoup
 import lxml.html
@@ -21,8 +21,8 @@ class BlackboardSession():
         self.session = requests.Session()
 
         self.options = Options()
-        self.options.headless = False
-        profile = webdriver.FirefoxProfile("/home/mitchell/.mozilla/firefox/pl0ce26f.seleniumNoDownloads")
+        self.options.headless = not debug
+        profile = webdriver.FirefoxProfile("/home/cole/.mozilla/firefox/zg2nilps.default")
         self.sessionr = webdriver.Firefox(options=self.options, firefox_profile=profile)
 
 
@@ -89,13 +89,19 @@ class BlackboardSession():
         #print(self.session.current_url)
         r = self.session.get(self.url, allow_redirects=True)
 
-        self.session.post(r.url, data=self.payload, allow_redirects=True)
+        r = self.session.post(r.url, data=self.payload, allow_redirects=True)
 
-        r = self.session.get('https://' + blackBoardBaseURL)
+        #print(r.content)
+        samlresponse = BeautifulSoup(r.content, "html.parser").find("input", {"name":"SAMLResponse"})['value']
+
+        
+
+        r = self.session.post('https://' + blackBoardBaseURL + "/auth-saml/saml/SSO/alias/_154_1", data={"SAMLResponse" : samlresponse}, allow_redirects=True)
 
 
         sleep(1)
-        print(r.content)
+        r = self.session.get("https://uoit.blackboard.com/bbcswebdav/pid-1294189-dt-content-rid-23219309_1/courses/20200174256.202001/Lab1_Published_data.xlsx")
+        print(r.text)
 
         #print req.text
         self.getUnitList()
