@@ -46,7 +46,7 @@ class BlackboardUnit():
         if len(re.findall(r'http[s\:]+\/\/', file_url)) > 1:
             file_url = file_url.replace("https://" + blackBoardBaseURL + "/", "")
         urlResponse = self.session.get(file_url, allow_redirects=False)
-
+ 
         if urlResponse.status_code == 302:
             urlpath = urlResponse.headers['location'].replace("https://" + blackBoardBaseURL + "/", "")
             #print(urlpath)
@@ -84,10 +84,11 @@ class BlackboardUnit():
 
         name = sanitize(name)
         listedName = sanitize(listedName)
+
         if name != 'defaultTab' and '.html' not in name:
+            
             if not os.path.isdir(thepath):
                 os.makedirs(thepath)
-
             #if (not os.path.exists(thepath + name)):
             if (not os.path.exists(thepath + listedName + '.' + ext)):
                 print(urlpath)
@@ -97,6 +98,7 @@ class BlackboardUnit():
                     #with iopen(thepath + name, 'wb') as file:
                     with iopen(thepath + listedName + '.' + ext, 'wb') as file:
                         file.write(urlResponse.content)
+                        print(thepath+listedName + '.' + ext)
                 else:
                     #print(urlResponse.status_code)
                     return False
@@ -150,8 +152,8 @@ class BlackboardUnit():
                     if not os.path.isdir(tempPath):
                         os.makedirs(tempPath)
 
-                    if not (os.path.isfile(tempPath + sanitize(htmlLink.div.h3.text) + ".pdf")):
-                        with open(tempPath + sanitize(htmlLink.div.h3.text) + ".pdf", "wb") as file:
+                    if not (os.path.isfile(tempPath + sanitize(htmlLink.div.h3.text) + " - text.pdf")):
+                        with open(tempPath + sanitize(htmlLink.div.h3.text) + " - text.pdf", "wb") as file:
                             file.write(tempT)
                             file.flush()
 

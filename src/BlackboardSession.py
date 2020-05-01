@@ -100,8 +100,8 @@ class BlackboardSession():
 
 
         sleep(1)
-        r = self.session.get("https://uoit.blackboard.com/bbcswebdav/pid-1294189-dt-content-rid-23219309_1/courses/20200174256.202001/Lab1_Published_data.xlsx")
-        print(r.text)
+        #r = self.session.get("https://uoit.blackboard.com/bbcswebdav/pid-1294189-dt-content-rid-23219309_1/courses/20200174256.202001/Lab1_Published_data.xlsx")
+        #print(r.text)
 
         #print req.text
         self.getUnitList()
@@ -124,6 +124,7 @@ class BlackboardSession():
 
             #print(htmlLink)
 
+            link = link.strip()
 
             if link.startswith('/webapps/blackboard/execute/launcher?type=Course'):
                 link = \
@@ -132,7 +133,7 @@ class BlackboardSession():
                 link = link.replace('_1&url=', '')
                 #self.unitList.append(BlackboardUnit(link, htmlLink.string.replace('/',''), self.session, self.sessionr))
                 if link not in self.links:
-                    self.unitList.append(BlackboardUnit(link, htmlLink.string.replace('/',''), self.session, self.sessionr))
+                    self.unitList.append(BlackboardUnit(link, htmlLink.string.replace('/','').replace(".XLIST", ""), self.session, self.sessionr))
                     self.links.append(link)
 
     #gets all available iLectures for current logged in user
