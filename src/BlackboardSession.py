@@ -22,7 +22,7 @@ class BlackboardSession():
 
         self.options = Options()
         self.options.headless = not debug
-        profile = webdriver.FirefoxProfile("/home/cole/.mozilla/firefox/zg2nilps.default")
+        profile = webdriver.FirefoxProfile("/home/mitchell/.mozilla/firefox/pl0ce26f.seleniumNoDownloads")
         self.sessionr = webdriver.Firefox(options=self.options, firefox_profile=profile)
 
 
@@ -94,7 +94,7 @@ class BlackboardSession():
         #print(r.content)
         samlresponse = BeautifulSoup(r.content, "html.parser").find("input", {"name":"SAMLResponse"})['value']
 
-        
+
 
         r = self.session.post('https://' + blackBoardBaseURL + "/auth-saml/saml/SSO/alias/_154_1", data={"SAMLResponse" : samlresponse}, allow_redirects=True)
 

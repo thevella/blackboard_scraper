@@ -2,7 +2,7 @@ debug = False
 #blackBoardBaseURL = "lms.curtin.edu.au"
 blackBoardBaseURL = 'uoit.blackboard.com'
 
-valid_chars = '-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
+valid_chars = '-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-&'
 
 #sanitizes the filenames for windows (and hopefully other OS' too!)
 def sanitize(filename):

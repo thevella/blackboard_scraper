@@ -23,7 +23,11 @@ class BlackboardUnit():
         self.sessionr = sessionr
         self.visitList = []
         self.cssHeader=""
-        with open("header.css", "r") as cssFile:
+        with open("style.css", "r") as cssFile:
+            for x in cssFile.readlines():
+                self.cssHeader+=x
+
+        with open("head.html", "r") as cssFile:
             for x in cssFile.readlines():
                 self.cssHeader+=x
 
@@ -46,7 +50,7 @@ class BlackboardUnit():
         if len(re.findall(r'http[s\:]+\/\/', file_url)) > 1:
             file_url = file_url.replace("https://" + blackBoardBaseURL + "/", "")
         urlResponse = self.session.get(file_url, allow_redirects=False)
- 
+
         if urlResponse.status_code == 302:
             urlpath = urlResponse.headers['location'].replace("https://" + blackBoardBaseURL + "/", "")
             #print(urlpath)
@@ -86,7 +90,7 @@ class BlackboardUnit():
         listedName = sanitize(listedName)
 
         if name != 'defaultTab' and '.html' not in name:
-            
+
             if not os.path.isdir(thepath):
                 os.makedirs(thepath)
             #if (not os.path.exists(thepath + name)):
@@ -102,6 +106,38 @@ class BlackboardUnit():
                 else:
                     #print(urlResponse.status_code)
                     return False
+    def downloadContentPDF(self, soup, path, folder_name):
+        htmlLink = soup.find("div", {"id":"content"})
+
+        tempT = self.cssHeader + htmlLink.prettify( formatter="html" )
+
+        tempT = tempT.replace("src=\"/", "src=\"https://" + blackBoardBaseURL + "/").replace("href=\"/", "href=\"https://" + blackBoardBaseURL + "/")
+
+        #tempT = htmlLink.prettify( formatter="html" )
+        options = {
+        'quiet': ''
+        }
+        #pdfkit.from_string(temp, "temp_" + str(number) + ".pdf", options=options)
+        tempT = pdfkit.from_string(tempT, False, options=options)
+
+        #temp =""
+        #with open("temp_" + str(number) + ".pdf", "rb") as byteObject:
+        #    temp = byteObject.read()
+        tempPath = path + '/' + self.name + '/'
+
+        if len(folder_name) > 0:
+            tempPath += folder_name + '/'
+
+        if not os.path.isdir(tempPath):
+            os.makedirs(tempPath)
+
+        fileName = "Page Content - text.pdf"
+
+        if not (os.path.isfile(tempPath + fileName)):
+            with open(tempPath + fileName, "wb") as file:
+                file.write(tempT)
+                file.flush()
+
 
     #scrapes a page (and all pages on the page)
     #content_id: the content ID number for the page
@@ -126,7 +162,10 @@ class BlackboardUnit():
         #soupTemp = BeautifulSoup(self.sessionr.page_source,features="lxml")
 
         ## for pdfs
+        self.downloadContentPDF(soup, path, folder_name)
 
+
+        """
         for htmlLink in soup.find("div", {"id":"containerdiv"}).find_all('li'):
             if htmlLink.get('id') is None or htmlLink is None:
                 continue
@@ -134,6 +173,7 @@ class BlackboardUnit():
             if 'contentListItem' in htmlLink.get('id'):
                 if htmlLink.text != htmlLink.div.h3.text:
                     tempT = self.cssHeader + htmlLink.prettify( formatter="html" )
+                    tempT = tempT.replace("src=\"/", "src=\"https://" + blackBoardBaseURL + "/").replace("href=\"/", "href=\"https://" + blackBoardBaseURL + "/")
                     #tempT = htmlLink.prettify( formatter="html" )
                     options = {
                     'quiet': ''
@@ -156,6 +196,8 @@ class BlackboardUnit():
                         with open(tempPath + sanitize(htmlLink.div.h3.text) + " - text.pdf", "wb") as file:
                             file.write(tempT)
                             file.flush()
+
+        """
 
 
 
