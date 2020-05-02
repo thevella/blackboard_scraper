@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from io import open as iopen
 from urllib.parse import urlsplit
 import urllib.parse
+from copy import deepcopy
 
 import requests
 
@@ -106,16 +107,33 @@ class BlackboardUnit():
                 else:
                     #print(urlResponse.status_code)
                     return False
-    def downloadContentPDF(self, soup, path, folder_name):
+
+
+    def downloadContentPDF(self, soup, path, folder_name, fileName="Page Content - text.pdf"):
         htmlLink = soup.find("div", {"id":"content"})
+
+        for s in soup.select('script'):
+            s.decompose()
+
+        for s in soup.select('a'):
+            if s.get('onclick'):
+                s.replaceWith(s.text)
 
         tempT = self.cssHeader + htmlLink.prettify( formatter="html" )
 
-        tempT = tempT.replace("src=\"/", "src=\"https://" + blackBoardBaseURL + "/").replace("href=\"/", "href=\"https://" + blackBoardBaseURL + "/")
+        tempT = re.sub(r'"(/.*?)"', "\"https://" + blackBoardBaseURL + r'\g<1>"', tempT)
+        tempT = re.sub(r"'(/.*?)'", "'https://" + blackBoardBaseURL + r'\g<1>\'', tempT)
+        tempT = re.sub(r"onclick=\"mygrades.loadContentFrame\((.*?)\)\"", r'\g<1>', tempT)
 
+
+        #tempT = tempT.replace("src=\"/", "src=\"https://" + blackBoardBaseURL + "/").replace("href=\"/", "href=\"https://" + blackBoardBaseURL + "/").replace("\'/", "\'https://" + blackBoardBaseURL + "/").replace("\"/", "\"https://" + blackBoardBaseURL + "/")
+        #print(tempT)
         #tempT = htmlLink.prettify( formatter="html" )
         options = {
-        'quiet': ''
+        'quiet': '',
+        'disable-javascript': '',
+        'load-error-handling': 'ignore'
+
         }
         #pdfkit.from_string(temp, "temp_" + str(number) + ".pdf", options=options)
         tempT = pdfkit.from_string(tempT, False, options=options)
@@ -131,7 +149,7 @@ class BlackboardUnit():
         if not os.path.isdir(tempPath):
             os.makedirs(tempPath)
 
-        fileName = "Page Content - text.pdf"
+        #fileName = "Page Content - text.pdf"
 
         if not (os.path.isfile(tempPath + fileName)):
             with open(tempPath + fileName, "wb") as file:
@@ -164,42 +182,7 @@ class BlackboardUnit():
         ## for pdfs
         self.downloadContentPDF(soup, path, folder_name)
 
-
-        """
-        for htmlLink in soup.find("div", {"id":"containerdiv"}).find_all('li'):
-            if htmlLink.get('id') is None or htmlLink is None:
-                continue
-
-            if 'contentListItem' in htmlLink.get('id'):
-                if htmlLink.text != htmlLink.div.h3.text:
-                    tempT = self.cssHeader + htmlLink.prettify( formatter="html" )
-                    tempT = tempT.replace("src=\"/", "src=\"https://" + blackBoardBaseURL + "/").replace("href=\"/", "href=\"https://" + blackBoardBaseURL + "/")
-                    #tempT = htmlLink.prettify( formatter="html" )
-                    options = {
-                    'quiet': ''
-                    }
-                    #pdfkit.from_string(temp, "temp_" + str(number) + ".pdf", options=options)
-                    tempT = pdfkit.from_string(tempT, False, options=options)
-
-                    #temp =""
-                    #with open("temp_" + str(number) + ".pdf", "rb") as byteObject:
-                    #    temp = byteObject.read()
-                    tempPath = path + '/' + self.name + '/'
-
-                    if len(folder_name) > 0:
-                        tempPath += folder_name + '/'
-
-                    if not os.path.isdir(tempPath):
-                        os.makedirs(tempPath)
-
-                    if not (os.path.isfile(tempPath + sanitize(htmlLink.div.h3.text) + " - text.pdf")):
-                        with open(tempPath + sanitize(htmlLink.div.h3.text) + " - text.pdf", "wb") as file:
-                            file.write(tempT)
-                            file.flush()
-
-        """
-
-
+        soup = BeautifulSoup(self.sessionr.page_source, "html.parser")
 
         ## For attachments
         for htmlLink in soup.find("div", {"id":"containerdiv"}).find_all('li'):
@@ -375,37 +358,29 @@ class BlackboardUnit():
                         print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
 
 
-
-
-
-        '''
-        for htmlLink in soup.find_all('a'):
-            link = htmlLink.get('href')
-            if link is None:
-                continue
-
-            if link.startswith('https://' + blackBoardBaseURL + '/webapps/blackboard/content/listContent.jsp?') or link.startswith('/webapps/blackboard/content/listContent.jsp?'):
-                link = link.replace('https://' + blackBoardBaseURL + '/webapps/blackboard/content/listContent.jsp?course_id=_'
-                               + self.uid + '_1&content_id=_', '')
-                link = link.replace('/webapps/blackboard/content/listContent.jsp?course_id=_'
-                               + self.uid + '_1&content_id=_', '')
-                link = link.replace('_1&mode=reset', '')
-                link = link.replace('_1', '')
-                try:
-                    if link not in visitlist:
-                        visitlist.append(link)
-                        #visitlist = self.recursiveScrape(link, htmlLink.span.string, visitlist, path)
-                        visitlist = self.recursiveScrape(link, folder_name + '/' + sanitize(htmlLink.span.string), visitlist, path)
-                except:
-                    print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
-        '''
         return 0
+
+    def recursiveScrapeDiscussions(self, path):
+        pass
 
     #starts scraping the unit, path is where it will save the files to
     def startScrape(self, path):
         #lock.acquire()
         self.visitList = []
         print("\n\n" + self.name + ' has Started\n\n')
+
+        # grades
+        print("\nDownloading Grades\n")
+        request = self.sessionr.get("https://" + blackBoardBaseURL + "/webapps/bb-mygrades-BBLEARN/myGrades?course_id=" + self.uid + "_1&stream_name=mygrades&is_stream=false")
+
+        self.downloadContentPDF(BeautifulSoup(self.sessionr.page_source, "html.parser"), path, "", "My Grades - text.pdf")
+
+        # announcements
+        print("\nDownloading Announcements\n")
+        request = self.sessionr.get("https://" + blackBoardBaseURL + "/webapps/blackboard/execute/announcement?method=search&context=mybb&course_id=" + self.uid + "_1&viewChoice=2")
+
+        self.downloadContentPDF(BeautifulSoup(self.sessionr.page_source, "html.parser"), path, "", "Announcements - text.pdf")
+
         #request = self.session.get('https://' + blackBoardBaseURL + '/webapps/blackboard/execute/launcher?type=Course&id=_' + self.uid + '_1')
         self.sessionr.get('https://' + blackBoardBaseURL + '/webapps/blackboard/execute/launcher?type=Course&id=_' + self.uid + '_1')
         sleep(3)
@@ -462,5 +437,13 @@ class BlackboardUnit():
                         self.recursiveScrape(link, sanitize(htmlLink.span.string), path)
                 except:
                     print("Error: %s -  %s" % (sys.exc_info()[0], str(sys.exc_info()[1])))
+
+
+
+
+        # Discussions
+        print("\nDownloading Discussions\n")
+        self.recursiveScrapeDiscussions(path)
+
         print("\n" + self.name + ' has finished')
         #lock.release()
